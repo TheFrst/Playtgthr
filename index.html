@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <!-- © 2026 TheFrst. All rights reserved. No copying, modification or redistribution without written permission. -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Playtgthr</title>
+  <style>
+    :root { --bg: #0f0f14; --card: #1b1b24; --text: #f2f2f5; --muted: #9a9aab; --green: #4ade80; --pink: #f472b6; --red: #f87171; }
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 16px; background: var(--bg); color: var(--text); }
+    h1 { margin: 8px 0 4px; }
+    h2 { margin: 12px 0; }
+    .muted { color: var(--muted); }
+    input, button { font-size: 18px; padding: 12px; margin: 4px 0; width: 100%; border-radius: 12px; border: 0; }
+    input { background: var(--card); color: var(--text); border: 1px solid #333; }
+    button { background: var(--green); color: #111; font-weight: 700; cursor: pointer; }
+    button:disabled { opacity: .4; }
+    button.alt { background: #333; color: var(--text); }
+    button.mine { background: #fff; color: #111; outline: 3px solid var(--green); }
+    button.kick { width: auto; padding: 2px 10px; margin: 0 0 0 8px; font-size: 14px; background: var(--red); }
+    ul, ol { padding-left: 20px; }
+    li { margin: 6px 0; }
+    .game { background: var(--card); border-radius: 16px; padding: 14px; margin: 12px 0; }
+    .game h3 { margin: 0 0 4px; font-size: 22px; }
+    .game p { margin: 0 0 8px; }
+    .imp button { background: var(--pink); }
+    .row { display: flex; gap: 8px; }
+    .row button { flex: 1; }
+    .big { font-size: 40px; text-align: center; margin: 12px 0; }
+    .card { background: var(--card); border-radius: 16px; padding: 16px; margin: 12px 0; text-align: center; font-size: 20px; }
+    .card b { font-size: 30px; display: block; margin-top: 4px; }
+    .card.imposter { background: #3b0f2a; border: 2px solid var(--pink); }
+    .badge { display: inline-block; background: #333; border-radius: 99px; padding: 4px 12px; font-size: 14px; }
+    .bar { background: var(--green); color: #111; margin: 4px 0; padding: 6px 10px; border-radius: 8px; font-weight: 600; }
+    #clues li span { color: var(--muted); }
+    [hidden] { display: none !important; }
+    .new { font-size: 11px; background: var(--pink); color: #111; padding: 2px 8px; border-radius: 99px; vertical-align: middle; margin-left: 6px; letter-spacing: 1px; }
+    .under button { background: #facc15; } .wyr button { background: #60a5fa; } .hot button { background: #fb923c; }
+    .hallbox ol { margin: 6px 0 0; padding-left: 4px; list-style: none; } .hallbox li { font-size: 17px; }
+    .gamegrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; } .gamegrid button { margin: 0; font-size: 15px; padding: 10px 6px; }
+    .packs { display: flex; flex-wrap: wrap; gap: 6px; } .packs button { width: auto; margin: 0; padding: 8px 12px; font-size: 14px; border-radius: 99px; }
+    #lobby:has(#packs[hidden]) #packlabel { display: none; }
+    #choices.opts { display: grid; gap: 10px; } #choices.opts button { padding: 22px 14px; font-size: 20px; min-height: 90px; white-space: normal; }
+    #choices.opts.wyr button:first-child { background: #60a5fa; } #choices.opts.wyr button:last-child { background: #f472b6; }
+    #choices.opts.hot button:first-child { background: #fb923c; } #choices.opts.hot button:last-child { background: #93c5fd; }
+    #choices.opts button.mine { outline: 4px solid #fff; transform: scale(1.02); }
+    section { animation: secIn .35s ease-out; } @keyframes secIn { from { opacity: 0; transform: translateY(10px); } }
+    .hold #winner, .hold #bars, .hold #who, .hold #headline, .hold #subline, .hold .card, .hold #rwho { visibility: hidden; }
+    .count { position: fixed; inset: 0; display: grid; place-items: center; font-size: 140px; font-weight: 900; color: #fff; background: radial-gradient(circle, #3b1f5ccc, #08080cee); z-index: 50; animation: cnt .65s ease-out infinite; }
+    @keyframes cnt { from { transform: scale(1.4); opacity: .2; } to { transform: scale(1); opacity: 1; } }
+    #winner { animation: pop .6s cubic-bezier(.2,1.6,.4,1); } @keyframes pop { from { transform: scale(.3); opacity: 0; } }
+    .bar { transition: width .9s cubic-bezier(.2,.8,.2,1); animation: grow .9s cubic-bezier(.2,.8,.2,1) backwards; } @keyframes grow { from { width: 8% !important; } }
+    .confetti { position: fixed; inset: 0; pointer-events: none; z-index: 60; overflow: hidden; }
+    .confetti i { position: absolute; top: -20px; width: 9px; height: 14px; border-radius: 2px; animation: fall 2.6s ease-in forwards; }
+    @keyframes fall { to { transform: translate(var(--x), 110vh) rotate(720deg); } }
+
+    /* ===== title screen ===== */
+    #splash { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px;
+              background: radial-gradient(ellipse at 50% 25%, #3b1f5c 0%, #15101f 55%, #08080c 100%); color: #fff; overflow: hidden; transition: opacity .6s, transform .6s; }
+    #splash.gone { opacity: 0; transform: scale(1.06); pointer-events: none; }
+    #splash .sp-emoji { font-size: 46px; letter-spacing: 10px; animation: spIn 1s .2s ease-out backwards, spFloat 3s 1.2s ease-in-out infinite; }
+    #splash .sp-title { font-family: system-ui, -apple-system, sans-serif; font-size: clamp(48px, 15vw, 88px); font-weight: 900; line-height: .95; letter-spacing: -1px; margin: 14px 0 10px; animation: spIn 1s ease-out backwards; text-shadow: 0 6px 30px rgba(0,0,0,.45); }
+    #splash .sp-title span { color: #4ade80; }
+    #splash .sp-tag { max-width: 34ch; color: rgba(255,255,255,.75); font-size: 16px; line-height: 1.5; animation: spIn 1s .35s ease-out backwards; }
+    #splash .sp-go { width: auto; min-width: 220px; margin-top: 30px; padding: 16px 34px; font-size: 20px; border-radius: 99px; background: #4ade80; color: #111; font-weight: 900; letter-spacing: 1px; border: 0;
+                     box-shadow: 0 0 0 0 #4ade80; animation: spIn 1s .5s ease-out backwards, spPulse 2s 1.5s infinite; cursor: pointer; }
+    #splash .sp-by { position: absolute; bottom: max(18px, env(safe-area-inset-bottom)); left: 0; right: 0; font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,.55); }
+    #splash .sp-by b { color: #4ade80; }
+    .made-by { text-align: center; color: var(--muted); font-size: 11px; letter-spacing: 3px; text-transform: uppercase; padding: 24px 0 10px; }
+    .made-by b { color: #4ade80; }
+    @keyframes spIn { from { opacity: 0; transform: translateY(24px); } }
+    @keyframes spFloat { 50% { transform: translateY(-6px); } }
+    @keyframes spPulse { 0% { box-shadow: 0 0 0 0 #4ade80aa; } 70% { box-shadow: 0 0 0 18px #4ade8000; } 100% { box-shadow: 0 0 0 0 #4ade8000; } }
+  </style>
+</head>
+<body>
+
+  <!-- HOME: pick a game -->
+  <div id="splash">
+    <div class="sp-emoji">🎉👑🕵️🎭🔥</div>
+    <div class="sp-title">Play<span>tgthr</span></div>
+    <div class="sp-tag">Party games for your group. Everyone plays on their own phone: Who's the Most?, Imposter, Undercover, Would You Rather and Hot Takes.</div>
+    <button class="sp-go" id="spgo">▶ START</button>
+    <div class="sp-by">Made by <b>TheFrst</b><br><span class="copy" style="opacity:.75;letter-spacing:.05em;text-transform:none">© 2026 TheFrst. All rights reserved.</span></div>
+  </div>
+  <script>
+    (function () {
+      var sp = document.getElementById("splash");
+      function go() { sp.classList.add("gone"); setTimeout(function () { sp.remove(); }, 650); }
+      document.getElementById("spgo").addEventListener("click", go);
+      if (location.hash === "#tes") go();   // automated tests skip the title screen
+    })();
+  </script>
+
+  <section id="home">
+    <h1>Playtgthr 🎉</h1>
+    <p class="muted">Party games for your group. Everyone plays on their own phone.</p>
+    <input id="name" maxlength="16" placeholder="Your name">
+
+    <div class="game">
+      <h3>👑 Who's the Most?</h3>
+      <p class="muted">A prompt pops up, everyone secretly votes for a friend, then the big reveal. 10 rounds.</p>
+      <button data-create="most">Create room</button>
+    </div>
+    <div class="game imp">
+      <h3>🕵️ Imposter</h3>
+      <p class="muted">Everyone gets the secret word except one person. Give clues, find the faker.</p>
+      <button data-create="imposter">Create room</button>
+    </div>
+    <div class="game under">
+      <h3>🎭 Undercover <span class="new">NEW</span></h3>
+      <p class="muted">Everyone gets a word, but one person's is slightly different, and even they don't know it. Clues, suspicion, chaos.</p>
+      <button data-create="under">Create room</button>
+    </div>
+    <div class="game wyr">
+      <h3>🤔 Would You Rather <span class="new">NEW</span></h3>
+      <p class="muted">Two impossible choices. Everyone picks in secret, then see who's with the crowd and who's the rebel.</p>
+      <button data-create="wyr">Create room</button>
+    </div>
+    <div class="game hot">
+      <h3>🔥 Hot Takes <span class="new">NEW</span></h3>
+      <p class="muted">Agree or disagree with a spicy opinion. Find out who's alone on their island.</p>
+      <button data-create="hot">Create room</button>
+    </div>
+    <div id="hall" class="game hallbox" hidden>
+      <h3>🏆 Your group's hall of fame</h3>
+      <ol id="halllist"></ol>
+    </div>
+    <button id="mute" class="alt"></button>
+
+    <h2>Got a code?</h2>
+    <input id="joincode" maxlength="4" placeholder="CODE" autocapitalize="characters">
+    <button id="join" class="alt">Join room</button>
+    <div class="made-by">Made by <b>TheFrst</b><br><span class="copy" style="opacity:.75;letter-spacing:.05em;text-transform:none">© 2026 TheFrst. All rights reserved.</span></div>
+  </section>
+
+  <!-- LOBBY (both games) -->
+  <section id="lobby" hidden>
+    <span class="badge" id="gamename"></span>
+    <h1 class="big" id="code"></h1>
+    <ul id="players"></ul>
+    <button id="share" class="alt">Share invite link</button>
+    <div class="host-only">
+      <p class="muted">Game:</p>
+      <div class="gamegrid">
+        <button class="alt" data-game="most">👑 Who's the Most?</button>
+        <button class="alt" data-game="imposter">🕵️ Imposter</button>
+        <button class="alt" data-game="under">🎭 Undercover</button>
+        <button class="alt" data-game="wyr">🤔 Would You Rather</button>
+        <button class="alt" data-game="hot">🔥 Hot Takes</button>
+      </div>
+      <p class="muted" id="packlabel">Question pack:</p>
+      <div id="packs" class="packs"></div>
+      <button id="start">Start</button>
+    </div>
+    <p class="guest-only muted">Waiting for the host to start…</p>
+  </section>
+
+  <!-- IMPOSTER: clue round -->
+  <section id="clue" hidden>
+    <span class="badge" id="cluecount"></span>
+    <div class="card" id="secret"></div>
+    <ol id="clues"></ol>
+    <div id="clueform">
+      <h2>Your turn! Give one clue</h2>
+      <input id="cluetext" maxlength="40" placeholder="One word or short phrase">
+      <button id="sendclue">Send clue</button>
+    </div>
+    <p id="turn" class="muted"></p>
+    <button id="skipturn" class="alt host-only">Skip this player</button>
+  </section>
+
+  <!-- VOTE (both games) -->
+  <section id="vote" hidden>
+    <span class="badge" id="roundinfo"></span>
+    <div class="card" id="vsecret" hidden></div>
+    <h2 id="prompt"></h2>
+    <ol id="recap" hidden></ol>
+    <p id="count" class="muted"></p>
+    <div id="choices"></div>
+    <p class="muted">Still voting:</p>
+    <ul id="waiting"></ul>
+    <button id="force" class="alt host-only">Reveal now</button>
+  </section>
+
+  <!-- WHO'S THE MOST: reveal -->
+  <section id="reveal" hidden>
+    <p class="muted" id="rprompt"></p>
+    <h1 class="big" id="winner"></h1>
+    <div id="bars"></div>
+    <ul id="who"></ul>
+    <button id="next" class="host-only">Next</button>
+  </section>
+
+  <!-- WHO'S THE MOST: final -->
+  <section id="end" hidden>
+    <h1>🏆 Final results</h1>
+    <h2 id="titles"></h2>
+    <ol id="rank"></ol>
+    <button id="sharewin" class="alt">📤 Share the results</button>
+    <button id="tolobby1" class="host-only">Back to lobby</button>
+  </section>
+
+  <!-- IMPOSTER: caught imposter guesses the word -->
+  <section id="guess" hidden>
+    <h1 class="big" id="caughtname"></h1>
+    <div id="guessform">
+      <p>You got caught! Guess the secret word to steal the win.</p>
+      <input id="guesstext" maxlength="40" placeholder="The word is…">
+      <button id="sendguess">Guess</button>
+    </div>
+    <p id="guesswait" class="muted"></p>
+    <button id="skipguess" class="alt host-only">Skip their guess</button>
+  </section>
+
+  <!-- IMPOSTER: result -->
+  <section id="result" hidden>
+    <h1 class="big" id="headline"></h1>
+    <p id="subline"></p>
+    <div class="card">The word was <b id="theword"></b></div>
+    <ul id="rwho"></ul>
+    <h2>Scores</h2>
+    <ol id="scores"></ol>
+    <button id="sharewin2" class="alt">📤 Share</button>
+    <button id="nextword" class="host-only">Next word</button>
+    <button id="tolobby2" class="alt host-only">Back to lobby</button>
+  </section>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
